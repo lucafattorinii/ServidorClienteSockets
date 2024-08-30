@@ -58,4 +58,4 @@ El cliente en C y el cliente en Java implementan menús que permiten al usuario 
 
 ## Contacto
 
-Para más información o preguntas, puedes contactarme a través de mi correo: [fattouzuki@gmail.com](mailto:fattouzuki@gmail.com).
+Para más información o preguntas, mi correo: [fattouzuki@gmail.com](mailto:fattouzuki@gmail.com).
