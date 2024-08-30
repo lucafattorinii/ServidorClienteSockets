@@ -1,4 +1,3 @@
-// servidor.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,6 +54,7 @@ int main() {
     // Configurar el socket
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
         perror("Error al configurar el socket");
+        close(server_fd);
         exit(EXIT_FAILURE);
     }
 
@@ -65,12 +65,14 @@ int main() {
     // Asociar el socket a la dirección y puerto especificados
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("Error al asociar el socket");
+        close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     // Escuchar las conexiones entrantes
     if (listen(server_fd, 3) < 0) {
         perror("Error al escuchar");
+        close(server_fd);
         exit(EXIT_FAILURE);
     }
 
@@ -79,11 +81,17 @@ int main() {
     while (1) {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
             perror("Error al aceptar la conexión");
-            exit(EXIT_FAILURE);
+            continue; // Continuar esperando nuevas conexiones
         }
 
         // Leer el mensaje del cliente
-        read(new_socket, buffer, MAX_BUFFER);
+        int bytes_read = read(new_socket, buffer, MAX_BUFFER - 1);
+        if (bytes_read < 0) {
+            perror("Error al leer del socket");
+            close(new_socket);
+            continue;
+        }
+        buffer[bytes_read] = '\0'; // Asegurar que el buffer esté correctamente terminado en null
 
         // Parsear la solicitud
         char respuesta[MAX_BUFFER] = {0};
@@ -106,9 +114,13 @@ int main() {
         }
 
         // Enviar la respuesta al cliente
-        send(new_socket, respuesta, strlen(respuesta), 0);
+        if (send(new_socket, respuesta, strlen(respuesta), 0) < 0) {
+            perror("Error al enviar la respuesta");
+        }
+
         close(new_socket);
     }
 
+    close(server_fd);
     return 0;
 }
