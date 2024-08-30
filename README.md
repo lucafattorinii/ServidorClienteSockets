@@ -56,10 +56,6 @@ El servidor en C fue diseñado para manejar múltiples clientes utilizando socke
 
 El cliente en C y el cliente en Java implementan menús que permiten al usuario elegir entre generar un nombre de usuario o una contraseña, y envían las solicitudes al servidor. Los resultados se muestran al usuario en la consola.
 
-## Licencia
-
-Este proyecto está licenciado bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
-
 ## Contacto
 
 Para más información o preguntas, puedes contactarme a través de mi correo: [fattouzuki@gmail.com](mailto:fattouzuki@gmail.com).
