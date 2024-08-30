@@ -1,4 +1,3 @@
-// cliente.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +22,7 @@ int main() {
 
     // Crear el socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("Error al crear el socket\n");
+        perror("Error al crear el socket");
         return -1;
     }
 
@@ -32,13 +31,15 @@ int main() {
 
     // Convertir la dirección IP a binario
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        printf("Dirección no válida o no soportada\n");
+        perror("Dirección no válida o no soportada");
+        close(sock);
         return -1;
     }
 
     // Conectar al servidor
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        printf("Conexión fallida\n");
+        perror("Conexión fallida");
+        close(sock);
         return -1;
     }
 
@@ -46,36 +47,57 @@ int main() {
     while (1) {
         menu();
         printf("Seleccione una opción: ");
-        scanf("%d", &opcion);
+        if (scanf("%d", &opcion) != 1) {
+            fprintf(stderr, "Error en la entrada\n");
+            while (getchar() != '\n'); // Limpiar buffer
+            continue;
+        }
 
         switch (opcion) {
             case 1:
                 printf("Ingrese la longitud del nombre de usuario: ");
                 int longitudNombre;
-                scanf("%d", &longitudNombre);
+                if (scanf("%d", &longitudNombre) != 1) {
+                    fprintf(stderr, "Error en la entrada\n");
+                    while (getchar() != '\n'); // Limpiar buffer
+                    continue;
+                }
                 snprintf(buffer, MAX_BUFFER, "nombre %d", longitudNombre);
                 break;
             case 2:
                 printf("Ingrese la longitud de la contraseña: ");
                 int longitudContrasena;
-                scanf("%d", &longitudContrasena);
+                if (scanf("%d", &longitudContrasena) != 1) {
+                    fprintf(stderr, "Error en la entrada\n");
+                    while (getchar() != '\n'); // Limpiar buffer
+                    continue;
+                }
                 snprintf(buffer, MAX_BUFFER, "contrasena %d", longitudContrasena);
                 break;
             case 3:
                 close(sock);
-                exit(0);
+                return 0;
             default:
                 printf("Opción no válida\n");
                 continue;
         }
 
         // Enviar la solicitud al servidor
-        send(sock, buffer, strlen(buffer), 0);
+        if (send(sock, buffer, strlen(buffer), 0) < 0) {
+            perror("Error al enviar la solicitud");
+            continue;
+        }
 
         // Leer la respuesta del servidor
-        read(sock, respuesta, MAX_BUFFER);
+        int bytes_read = read(sock, respuesta, MAX_BUFFER - 1);
+        if (bytes_read < 0) {
+            perror("Error al leer la respuesta");
+            continue;
+        }
+        respuesta[bytes_read] = '\0'; // Asegurar que el buffer esté correctamente terminado en null
         printf("Respuesta del servidor: %s\n", respuesta);
     }
 
+    close(sock);
     return 0;
 }
