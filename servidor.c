@@ -1,126 +1,176 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
 #include <time.h>
+#include <string.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
-#define PORT 8080
-#define MAX_BUFFER 1024
+#pragma comment(lib, "ws2_32.lib")
 
-// Función para generar un nombre de usuario alternando entre vocales y consonantes
-void generarNombreUsuario(int longitud, char *resultado) {
-    char vocales[] = "aeiou";
-    char consonantes[] = "bcdfghjklmnpqrstvwxyz";
-    int usarVocal = rand() % 2; // 0: empieza con consonante, 1: empieza con vocal
-
-    for (int i = 0; i < longitud; i++) {
-        if (usarVocal) {
-            resultado[i] = vocales[rand() % strlen(vocales)];
-        } else {
-            resultado[i] = consonantes[rand() % strlen(consonantes)];
-        }
-        usarVocal = !usarVocal; // Alternar
-    }
-    resultado[longitud] = '\0';
+int obtenerBooleanoAleatorio() {
+    return rand() % 2;
 }
 
-// Función para generar una contraseña alfanumérica
-void generarContrasena(int longitud, char *resultado) {
-    char caracteres[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    
-    for (int i = 0; i < longitud; i++) {
-        resultado[i] = caracteres[rand() % strlen(caracteres)];
+char obtenerCaracterAleatorio(int tipo) {
+    char digitos[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    char letras[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+    char *conjunto;
+    int tamano;
+
+    if (tipo == 1) {
+        conjunto = digitos;
+        tamano = sizeof(digitos) / sizeof(digitos[0]);
+    } else {
+        conjunto = letras;
+        tamano = sizeof(letras) / sizeof(letras[0]);
     }
-    resultado[longitud] = '\0';
+    int indiceAleatorio = rand() % tamano;
+    return conjunto[indiceAleatorio];
+}
+
+char* generarNombreUsuario(int longitud) {
+    if (longitud < 5 || longitud > 15) {
+        return "Longitud no valida, debe estar entre 5 y 15 caracteres";
+    }
+    char *usuario = (char *)malloc((longitud + 1) * sizeof(char));
+    char consonantes[] = {'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z'};
+    char vocales[] = {'a', 'e', 'i', 'o', 'u'};
+    int alternar = obtenerBooleanoAleatorio();
+    int indiceVocal = 0;
+    usuario[0] = '\0';
+
+    for (int i = 0; i < longitud; i++) {
+        if (i % 2 == 0) {
+            usuario[i] = alternar ? consonantes[i % (sizeof(consonantes)/sizeof(consonantes[0]))] : vocales[indiceVocal];
+            if (alternar == 0) {
+                indiceVocal++;
+                if (indiceVocal >= sizeof(vocales) / sizeof(vocales[0])) {
+                    indiceVocal = 0;
+                }
+            }
+        } else {
+            usuario[i] = alternar ? vocales[indiceVocal] : consonantes[i % (sizeof(consonantes)/sizeof(consonantes[0]))];
+            if (alternar == 1) {
+                indiceVocal++;
+                if (indiceVocal >= sizeof(vocales) / sizeof(vocales[0])) {
+                    indiceVocal = 0;
+                }
+            }
+        }
+    }
+    usuario[longitud] = '\0';  // Terminar cadena
+    return usuario;
+}
+
+char* generarClave(int longitud) {
+    if (longitud < 8 || longitud > 50) {
+        return "Longitud incorrecta, debe estar entre 8 y 50 caracteres";
+    }
+    char *clave = (char *)malloc((longitud + 1) * sizeof(char));
+    clave[0] = '\0';
+
+    for (int i = 0; i < longitud; i++) {
+        int esLetra = obtenerBooleanoAleatorio();
+        if (esLetra) {
+            char letra = obtenerCaracterAleatorio(0);
+            clave[i] = obtenerBooleanoAleatorio() ? letra : toupper((unsigned char)letra);
+        } else {
+            clave[i] = obtenerCaracterAleatorio(1);
+        }
+    }
+    clave[longitud] = '\0';  // Terminar cadena
+    return clave;
+}
+
+void iniciarSockets() {
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        printf("No se pudo iniciar Winsock. Codigo de error: %d\n", WSAGetLastError());
+        exit(EXIT_FAILURE);
+    }
+}
+
+void finalizarSockets() {
+    WSACleanup();
 }
 
 int main() {
-    int server_fd, new_socket;
-    struct sockaddr_in address;
-    int addrlen = sizeof(address);
-    char buffer[MAX_BUFFER] = {0};
-    int opt = 1;
+    srand(time(NULL));
+    iniciarSockets();
 
-    // Inicializar la semilla del generador de números aleatorios
-    srand(time(0));
-
-    // Crear el socket del servidor
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("Error al crear el socket");
+    int socketServidor = socket(AF_INET, SOCK_STREAM, 0);
+    if (socketServidor == INVALID_SOCKET) {
+        printf("Error al crear el socket. Codigo de error: %d\n", WSAGetLastError());
+        finalizarSockets();
         exit(EXIT_FAILURE);
     }
 
-    // Configurar el socket
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-        perror("Error al configurar el socket");
-        close(server_fd);
+    struct sockaddr_in direccionServidor;
+    direccionServidor.sin_family = AF_INET;
+    direccionServidor.sin_addr.s_addr = INADDR_ANY;
+    direccionServidor.sin_port = htons(8080);
+
+    if (bind(socketServidor, (struct sockaddr*)&direccionServidor, sizeof(direccionServidor)) == SOCKET_ERROR) {
+        printf("Error al asociar el socket. Codigo de error: %d\n", WSAGetLastError());
+        finalizarSockets();
         exit(EXIT_FAILURE);
     }
 
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
-
-    // Asociar el socket a la dirección y puerto especificados
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("Error al asociar el socket");
-        close(server_fd);
+    if (listen(socketServidor, 5) == SOCKET_ERROR) {
+        printf("Error al empezar a escuchar. Codigo de error: %d\n", WSAGetLastError());
+        finalizarSockets();
         exit(EXIT_FAILURE);
     }
 
-    // Escuchar las conexiones entrantes
-    if (listen(server_fd, 3) < 0) {
-        perror("Error al escuchar");
-        close(server_fd);
-        exit(EXIT_FAILURE);
-    }
+    printf("Servidor en funcionamiento en el puerto 8080...\n");
 
-    printf("Servidor en ejecución y esperando conexiones...\n");
+    int socketCliente;
+    struct sockaddr_in direccionCliente;
+    int tamanoCliente = sizeof(direccionCliente);
+    int salir = 0;
 
-    while (1) {
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-            perror("Error al aceptar la conexión");
-            continue; // Continuar esperando nuevas conexiones
+    do {
+        socketCliente = accept(socketServidor, (struct sockaddr*)&direccionCliente, &tamanoCliente);
+        if (socketCliente == INVALID_SOCKET) {
+            printf("Error al aceptar la conexion. Codigo de error: %d\n", WSAGetLastError());
+            finalizarSockets();
+            exit(EXIT_FAILURE);
         }
+        char *menu = "Selecciona una opcion:\n 1. Crear nombre de usuario.\n 2. Crear clave.\n 0. Salir\n";
+        send(socketCliente, menu, strlen(menu), 0);
 
-        // Leer el mensaje del cliente
-        int bytes_read = read(new_socket, buffer, MAX_BUFFER - 1);
-        if (bytes_read < 0) {
-            perror("Error al leer del socket");
-            close(new_socket);
-            continue;
-        }
-        buffer[bytes_read] = '\0'; // Asegurar que el buffer esté correctamente terminado en null
+        int opcion;
+        recv(socketCliente, &opcion, sizeof(opcion), 0);
+        opcion = ntohl(opcion);
 
-        // Parsear la solicitud
-        char respuesta[MAX_BUFFER] = {0};
-        if (strncmp(buffer, "nombre", 6) == 0) {
-            int longitud = atoi(buffer + 7);
-            if (longitud < 5 || longitud > 15) {
-                strcpy(respuesta, "Error: La longitud del nombre de usuario debe ser entre 5 y 15.");
-            } else {
-                generarNombreUsuario(longitud, respuesta);
-            }
-        } else if (strncmp(buffer, "contrasena", 10) == 0) {
-            int longitud = atoi(buffer + 11);
-            if (longitud < 8 || longitud > 50) {
-                strcpy(respuesta, "Error: La longitud de la contraseña debe ser entre 8 y 50.");
-            } else {
-                generarContrasena(longitud, respuesta);
-            }
+        if (opcion == 0) {
+            char *mensaje = "Hasta luego";
+            send(socketCliente, mensaje, strlen(mensaje), 0);
+        } else if (opcion > 2) {
+            char *mensaje = "Opcion no valida";
+            send(socketCliente, mensaje, strlen(mensaje), 0);
         } else {
-            strcpy(respuesta, "Error: Comando no reconocido.");
+            char *mensaje = "Indica la longitud deseada:";
+            send(socketCliente, mensaje, strlen(mensaje), 0);
+
+            int longitud;
+            recv(socketCliente, &longitud, sizeof(longitud), 0);
+            longitud = ntohl(longitud);
+
+            char *resultado;
+            if (opcion == 1) {
+                resultado = generarNombreUsuario(longitud);
+            } else if (opcion == 2) {
+                resultado = generarClave(longitud);
+            }
+
+            send(socketCliente, resultado, strlen(resultado), 0);
+            free(resultado);
         }
+        closesocket(socketCliente);
+    } while (!salir);
 
-        // Enviar la respuesta al cliente
-        if (send(new_socket, respuesta, strlen(respuesta), 0) < 0) {
-            perror("Error al enviar la respuesta");
-        }
-
-        close(new_socket);
-    }
-
-    close(server_fd);
+    closesocket(socketServidor);
+    finalizarSockets();
     return 0;
 }
