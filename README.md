@@ -1,6 +1,6 @@
 # ServidorClienteSockets
 
-Este proyecto implementa un servidor en lenguaje C utilizando sockets, junto con dos clientes, uno en C y otro en Java, para generar nombres de usuario y contraseñas.
+Este proyecto implementa un servidor en lenguaje C utilizando sockets, junto con dos clientes, uno en C y otro en Python, para generar nombres de usuario y contraseñas.
 
 ## Descripción
 
@@ -12,7 +12,7 @@ El servidor implementa las siguientes funcionalidades:
 
 - **servidor.c**: Implementación del servidor en C.
 - **cliente.c**: Implementación del cliente en C.
-- **ClienteJava.java**: Implementación del segundo cliente en Java.
+- **ClientePython.py**: Implementación del segundo cliente en Python.
 
 ## Compilación y Ejecución
 
@@ -34,14 +34,16 @@ Para compilar y ejecutar el cliente en C usando Code::Blocks, sigue estos pasos:
 3. Añade el archivo `cliente.c` al proyecto.
 4. Compila y ejecuta el proyecto desde Code::Blocks.
 
-### Cliente en Java
+### Cliente en Python
 
-Para compilar y ejecutar el cliente en Java usando Eclipse, sigue estos pasos:
+Para ejecutar el cliente en Python usando Visual Studio Code (VSCode), sigue estos pasos:
 
-1. Abre Eclipse.
-2. Crea un nuevo proyecto de Java.
-3. Añade el archivo `ClienteJava.java` al proyecto.
-4. Compila y ejecuta el proyecto desde Eclipse.
+1. Asegúrate de tener Python instalado en tu sistema.
+2. Abre Visual Studio Code.
+3. Abre el directorio que contiene el archivo `ClientePython.py`.
+4. Abre el archivo `ClientePython.py` en VSCode.
+5. Abre una terminal integrada en VSCode (`Ctrl + `).
+6. Ejecuta el cliente con el comando: `python ClientePython.py`.
 
 ## Pruebas Realizadas
 
@@ -54,7 +56,7 @@ Se han realizado las siguientes pruebas:
 
 El servidor en C fue diseñado para manejar múltiples clientes utilizando sockets. Los clientes se conectan al servidor y solicitan la generación de nombres de usuario o contraseñas. El servidor valida las longitudes solicitadas y responde con las cadenas generadas o mensajes de error en caso de validación fallida.
 
-El cliente en C y el cliente en Java implementan menús que permiten al usuario elegir entre generar un nombre de usuario o una contraseña, y envían las solicitudes al servidor. Los resultados se muestran al usuario en la consola.
+El cliente en C y el cliente en Python implementan menús que permiten al usuario elegir entre generar un nombre de usuario o una contraseña, y envían las solicitudes al servidor. Los resultados se muestran al usuario en la consola.
 
 ## Contacto
 
