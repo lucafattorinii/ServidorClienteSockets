@@ -14,7 +14,7 @@ Captura de pantalla del servidor en ejecución:
 ![Servidor en ejecución](images/Capturadepantalla124333.png)
 
 Captura de pantalla del cliente en Python:
-![Cliente en Python](images/Screenshot164450.png)
+![Cliente en Python](images/Capturadepantalla124333.png)
 
 ## Estructura del Proyecto
 
