@@ -15,8 +15,12 @@ Captura de pantalla del servidor en ejecución:
 
 
 
-Captura de pantalla del cliente en Python:
+Captura de pantalla nombre de usuario del cliente en Python:
 ![Cliente en Python](images/Capturadepantalla124255.png)
+
+
+Captura de pantalla clave del cliente en Python:
+![Cliente en Python](images/Capturadepantalla125524.png)
 
 ## Estructura del Proyecto
 
